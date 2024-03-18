@@ -38,6 +38,3 @@ u64 GetFileLastWriteTimestamp(const char *filepath);
  * By default, the string is printed in the output console of VisualStudio.
  */
 void LogString(const char* str);
-
-
-

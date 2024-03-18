@@ -5,160 +5,73 @@
 #pragma once
 
 #include "platform.h"
-#include <glad/glad.h>
-#include "ModelLoadingFunc.h"
+#include "BufferSupFuncs.h"
+#include "ModelLoadingFuncs.h"
+#include "Globals.h"
 
-typedef glm::vec2  vec2;
-typedef glm::vec3  vec3;
-typedef glm::vec4  vec4;
-typedef glm::ivec2 ivec2;
-typedef glm::ivec3 ivec3;
-typedef glm::ivec4 ivec4;
-
-struct Image
-{
-	void* pixels;
-	ivec2 size;
-	i32   nchannels;
-	i32   stride;
+const VertexV3V2 vertices[] = {
+    {glm::vec3(-0.5,-0.5,0.0), glm::vec2(0.0,0.0)},
+    {glm::vec3(0.5,-0.5,0.0), glm::vec2(1.0,0.0)},
+    {glm::vec3(0.5,0.5,0.0), glm::vec2(1.0,1.0)},
+    {glm::vec3(-0.5,0.5,0.0), glm::vec2(0.0,1.0)},
 };
 
-struct Texture
+const u16 indices[] =
 {
-	GLuint      handle;
-	std::string filepath;
-};
-
-struct Program
-{
-	GLuint             handle;
-	std::string        filepath;
-	std::string        programName;
-	u64                lastWriteTimestamp; // What is this for?
-	ModelLoader::VertexShaderLayout shaderLayout;
-};
-
-struct Model
-{
-	u32 meshIndex;
-	std::vector<u32> materialIndex;
-};
-
-struct SubMesh
-{
-	ModelLoader::VertexBufferLayout vertexBufferLayout;
-	std::vector<float> vertices;
-	std::vector<u32> indices;
-	u32 vertexOffset;
-	u32 indexOffset;
-
-	std::vector<ModelLoader::VAO> vaos;
-};
-
-struct Mesh
-{
-	std::vector<SubMesh> submeshes;
-	GLuint vertexufferHandle;
-	GLuint indexBufferHandle;
-};
-
-struct Material
-{
-	std::string name;
-	vec3 albedo;
-	vec3 emissive;
-	f32 smoothess;
-	u32 albedoTextureIndex;
-	u32 emissiveTextureIndex;
-	u32 specularTextureIndex;
-	u32 normalTextureIndex;
-	u32 bumpTextureIndex;
-};
-
-enum Mode
-{
-	Mode_TexturedQuad,
-	Mode_Count
-};
-
-struct VertexV3V2
-{
-	glm::vec3 pos;
-	glm::vec2 uv;
-};
-
-const VertexV3V2 vertices[] =
-{
-	{glm::vec3(-0.5, -0.5, 0.0), glm::vec2(0.0, 0.0)},
-	{glm::vec3(0.5, -0.5, 0.0), glm::vec2(1.0, 0.0)},
-	{glm::vec3(0.5, 0.5, 0.0), glm::vec2(1.0, 1.0)},
-	{glm::vec3(-0.5, 0.5, 0.5), glm::vec2(0.0, 1.0)},
-};
-
-const u16 indicex[] =
-{
-	0, 1, 2,
-	0, 2, 3
+    0,1,2,
+    0,2,3
 };
 
 struct App
 {
-	/*
-	App() : deltaTime(0.0f),
-		isRunning(true)
-	{
+    // Loop
+    f32  deltaTime;
+    bool isRunning;
 
-	}
-	*/
+    // Input
+    Input input;
 
-	// Loop
-	f32  deltaTime;
-	bool isRunning;
+    // Graphics
+    char gpuName[64];
+    char openGlVersion[64];
 
-	// Input
-	Input input;
+    ivec2 displaySize;
 
-	// Graphics
-	char gpuName[64];
-	char openGlVersion[64];
-	std::string openGLDebugInfo;
+    std::vector<Texture>    textures;
+    std::vector<Material>   materials;
+    std::vector<Mesh>       meshes;
+    std::vector<Model>      models;
+    std::vector<Program>    programs;
 
-	ivec2 displaySize;
+    // program indices
+    u32 texturedGeometryProgramIdx = 0;
+    u32 texturedMeshProgramIdx = 0;
 
-	std::vector<Texture>  textures;
-	std::vector<Material>  materials;
-	std::vector<Mesh>  meshes;
-	std::vector<Model>  models;
-	std::vector<Program>  programs;
+    u32 patricioModel = 0;
+    GLuint texturedMeshProgram_uTexture;
+    
+    // texture indices
+    u32 diceTexIdx;
+    u32 whiteTexIdx;
+    u32 blackTexIdx;
+    u32 normalTexIdx;
+    u32 magentaTexIdx;
 
-	// program indices
-	u32 texturedGeometryProgramIdx = 0;
-	u32 texturedMeshProgramIdx = 0;
-	u32 patricioModel;
-	u32 texturedMeshProgram_uTexture = 0;
+    // Mode
+    Mode mode;
 
-	// texture indices
-	u32 diceTexIdx;
-	u32 whiteTexIdx;
-	u32 blackTexIdx;
-	u32 normalTexIdx;
-	u32 magentaTexIdx;
+    // Embedded geometry (in-editor simple meshes such as
+    // a screen filling quad, a cube, a sphere...)
+    GLuint embeddedVertices;
+    GLuint embeddedElements;
 
-	// Mode
-	Mode mode;
+    // Location of the texture uniform in the textured quad shader
+    GLuint programUniformTexture;
 
-	// Embedded geometry (in-editor simple meshes such as
-	// a screen filling quad, a cube, a sphere...)
-	GLuint embeddedVertices;
-	GLuint embeddedElements;
+    // VAO object to link our screen filling quad with our textured quad shader
+    GLuint vao;
 
-	// Location of the texture uniform in the textured quad shader
-	GLuint programUniformTexture;
-
-	// VAO object to link our screen filling quad with our textured quad shader
-	GLuint vao;
-
-
+    std::string openglDebugInfo;
 };
 
 void Init(App* app);
@@ -168,3 +81,4 @@ void Gui(App* app);
 void Update(App* app);
 
 void Render(App* app);
+

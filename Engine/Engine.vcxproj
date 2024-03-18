@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Code\BufferSupFunc.cpp" />
+    <ClCompile Include="..\..\Engine_model_reference\Code\BufferSupFuncs.cpp" />
     <ClCompile Include="Code\engine.cpp" />
-    <ClCompile Include="Code\ModelLoadingFunc.cpp" />
+    <ClCompile Include="Code\ModelLoadingFuncs.cpp" />
     <ClCompile Include="Code\platform.cpp" />
     <ClCompile Include="ThirdParty\glad\include\glad\glad.c" />
     <ClCompile Include="ThirdParty\imgui-docking\imgui.cpp" />
@@ -34,10 +34,10 @@
     <ClCompile Include="ThirdParty\stb\stb.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Code\BufferSupFunc.h" />
+    <ClInclude Include="..\..\Engine_model_reference\Code\BufferSupFuncs.h" />
     <ClInclude Include="Code\engine.h" />
     <ClInclude Include="Code\Globals.h" />
-    <ClInclude Include="Code\ModelLoadingFunc.h" />
+    <ClInclude Include="Code\ModelLoadingFuncs.h" />
     <ClInclude Include="Code\platform.h" />
     <ClInclude Include="ThirdParty\glad\include\glad\glad.h" />
     <ClInclude Include="ThirdParty\glad\include\glad\khrplatform.h" />
@@ -52,6 +52,7 @@
     <ClInclude Include="ThirdParty\stb\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="WorkingDir\base_model.glsl" />
     <None Include="WorkingDir\shaders.glsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -1,4 +1,4 @@
-#include "BufferSupFunc.h"
+#include "BufferSupFuncs.h"
 
 namespace BufferManager
 {

@@ -51,10 +51,10 @@
     <ClCompile Include="ThirdParty\stb\stb.cpp">
       <Filter>Stb</Filter>
     </ClCompile>
-    <ClCompile Include="Code\BufferSupFunc.cpp">
+    <ClCompile Include="Code\ModelLoadingFuncs.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Code\ModelLoadingFunc.cpp">
+    <ClCompile Include="..\..\Engine_model_reference\Code\BufferSupFuncs.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
   </ItemGroup>
@@ -101,15 +101,18 @@
     <ClInclude Include="Code\Globals.h">
       <Filter>Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Code\BufferSupFunc.h">
+    <ClInclude Include="Code\ModelLoadingFuncs.h">
       <Filter>Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Code\ModelLoadingFunc.h">
+    <ClInclude Include="..\..\Engine_model_reference\Code\BufferSupFuncs.h">
       <Filter>Engine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="WorkingDir\shaders.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="WorkingDir\base_model.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
