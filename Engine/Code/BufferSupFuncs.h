@@ -16,6 +16,8 @@ namespace BufferManager
     #define PushMat3(buffer, value) PushAlignedData(buffer, value_ptr(value), sizeof(value), sizeof(vec4))
     #define PushMat4(buffer, value) PushAlignedData(buffer, value_ptr(value), sizeof(value), sizeof(vec4))
 
+    #define BINDING(b) b
+
     bool IsPowerOf2(u32 value);
 
     u32 Align(u32 value, u32 alignment);

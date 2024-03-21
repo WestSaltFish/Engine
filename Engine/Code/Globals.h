@@ -174,6 +174,13 @@ struct Buffer {
     u32 head;
 };
 
+struct Entity {
+    glm::mat4 worldMatrix;
+    u32 modelIndex;
+    u32 localParamOffset;
+    u32 localParamSize;
+};
+
 #define ILOG(...)                 \
 {                                 \
 char logBuffer[1024] = {};        \
