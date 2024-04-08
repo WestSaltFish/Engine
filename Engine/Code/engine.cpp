@@ -234,7 +234,39 @@ void Init(App* app)
 	app->entities.push_back({ glm::identity<glm::mat4>(), PatricModelIndex, 0, 0 });
 	//app->diceTexIdx = ModelLoader::LoadTexture2D(app, "dice.png");
 
-	app->mode = Mode_TexturedQuad;
+	glGenTextures(1, &app->colorAttachmentHandle);
+	glBindTexture(GL_TEXTURE_2D, app->colorAttachmentHandle);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, app->displaySize.x, app->displaySize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	GLuint depthAttachmentHandle;
+	glGenTextures(1, &depthAttachmentHandle);
+	glBindTexture(GL_TEXTURE_2D, depthAttachmentHandle);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, app->displaySize.x, app->displaySize.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glGenFramebuffers(1, &app->framebufferHandle);
+	glBindFramebuffer(GL_FRAMEBUFFER, app->framebufferHandle);
+
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, app->colorAttachmentHandle, 0);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthAttachmentHandle, 0);
+	
+	GLuint drawBuffer[] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(ARRAY_COUNT(drawBuffer), drawBuffer);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	app->mode = Mode::Mode_Deferred;
 }
 
 void Gui(App* app)
@@ -263,49 +295,61 @@ glm::mat4 TransformPositionScale(const vec3& pos, const vec3& scaleFactors)
 	return transform;
 }
 
-
-
 void Render(App* app)
 {
 	switch (app->mode)
 	{
-	case Mode_TexturedQuad:
-	{
-		app->UpdateEntityBuffer();
-
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glViewport(0, 0, app->displaySize.x, app->displaySize.y);
-		
-		const Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
-		glUseProgram(texturedMeshProgram.handle);
-
-		BufferManager::BindBuffer(app->localUniformBuffer);
-
-		for (auto it = app->entities.begin(); it != app->entities.end(); ++it)
+		case Mode_Deferred:
 		{
-			glBindBufferRange(GL_UNIFORM_BUFFER, BINDING(1), app->localUniformBuffer.handle, it->localParamOffset, it->localParamSize);
+			app->UpdateEntityBuffer();
 
-			Model& model = app->models[app->patricioModel];
-			Mesh& mesh = app->meshes[model.meshIdx];
+			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
-			for (u32 i = 0; i < mesh.submeshes.size(); ++i)
+			glBindFramebuffer(GL_FRAMEBUFFER, app->framebufferHandle);
+			
+			GLuint drawBuffers[] = { app->colorAttachmentHandle };
+			glDrawBuffers(ARRAY_COUNT(drawBuffers), drawBuffers);
+
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			const Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
+			glUseProgram(texturedMeshProgram.handle);
+
+			//glBindBufferRange(GL_UNIFORM_BUFFER, BINDING(0), app->localUniformBuffer.handle, app->globalParamsOffset, app->globals);
+			
+			BufferManager::BindBuffer(app->localUniformBuffer);
+
+			for (auto it = app->entities.begin(); it != app->entities.end(); ++it)
 			{
-				GLuint vao = FindVAO(mesh, i, texturedMeshProgram);
-				glBindVertexArray(vao);
+				glBindBufferRange(GL_UNIFORM_BUFFER, BINDING(1), app->localUniformBuffer.handle, it->localParamOffset, it->localParamSize);
 
-				u32 subMeshmaterialIdx = model.materialIdx[i];
-				Material& subMeshMaterial = app->materials[subMeshmaterialIdx];
+				Model& model = app->models[app->patricioModel];
+				Mesh& mesh = app->meshes[model.meshIdx];
 
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, app->textures[subMeshMaterial.albedoTextureIdx].handle);
-				glUniform1i(app->texturedMeshProgram_uTexture, 0);
+				for (u32 i = 0; i < mesh.submeshes.size(); ++i)
+				{
+					GLuint vao = FindVAO(mesh, i, texturedMeshProgram);
+					glBindVertexArray(vao);
 
-				SubMesh& submesh = mesh.submeshes[i];
-				glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
+					u32 subMeshmaterialIdx = model.materialIdx[i];
+					Material& subMeshMaterial = app->materials[subMeshmaterialIdx];
+
+					glActiveTexture(GL_TEXTURE0);
+					glBindTexture(GL_TEXTURE_2D, app->textures[subMeshMaterial.albedoTextureIdx].handle);
+					glUniform1i(app->texturedMeshProgram_uTexture, 0);
+
+					SubMesh& submesh = mesh.submeshes[i];
+					glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
+				}
 			}
+
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+			// Mix color attachment to plane.
 		}
-	}
 	break;
 	default:;
 	}
@@ -327,8 +371,26 @@ void App::UpdateEntityBuffer()
 	vec3 yCam = glm::cross(xCam, zCam);
 
 	glm::mat4 view = glm::lookAt(camPos, target, yCam);
-	
+
 	BufferManager::MapBuffer(localUniformBuffer, GL_WRITE_ONLY);
+
+	/*
+	globalParamsOffset - localUniformBuffer.head;
+	PushVec3(localUniformBuffer, cameraPosition);
+	PushUint(localUniformBuffer, lights.size());
+
+	for (int i = 0; i > lights.size(); ++i)
+	{
+		BufferManager::AlignHead(localUniformBuffer, sizeof(vec4));
+
+		Light& light = lights[i];
+		PushUInt(localUniformBuffer, light.type);
+		PushVec3(localUniformBuffer, light.color);
+		PushVec3(localUniformBuffer, light.direction);
+		PushVec3(localUniformBuffer, light.position);
+	}
+	globalParamsSize = localUniformBuffer.head - globalParamsOffset;
+	*/
 
 	u32 iteration = 0;
 

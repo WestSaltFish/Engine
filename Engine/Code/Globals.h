@@ -137,7 +137,8 @@ struct Model
 
 enum Mode
 {
-    Mode_TexturedQuad,
+    Mode_Forward,
+    Mode_Deferred,
     Mode_Count
 };
 
@@ -179,6 +180,20 @@ struct Entity {
     u32 modelIndex;
     u32 localParamOffset;
     u32 localParamSize;
+};
+
+enum LightType
+{
+    LightType_Directional,
+    LighthType_point
+};
+
+struct Light
+{
+    LightType type;
+    vec3 color;
+    vec3 direction;
+    vec3 position;
 };
 
 #define ILOG(...)                 \
