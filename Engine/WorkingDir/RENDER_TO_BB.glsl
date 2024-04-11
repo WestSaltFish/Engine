@@ -1,4 +1,4 @@
-#ifdef BASE_MODEL
+#ifdef RENDER_TO_BB
 
 #if defined(VERTEX) ///////////////////////////////////////////////////
 
@@ -46,6 +46,14 @@ void main()
 
 #elif defined(FRAGMENT) ///////////////////////////////////////////////
 
+struct Light
+{
+	uint type;
+	vec3 color;
+	vec3 direction;
+	vec3 position;
+}
+
 layout(binding = 0, std140) uniform GlobalParams
 {
 	vec3 uCameraposition;
@@ -57,8 +65,6 @@ in vec2 vTexCoord;
 in vec3 vPosition;
 in vec3 vNormal;
 in vec3 vViewDir;
-
-uniform sampler2D 
 
 uniform sampler2D uTexture;
 layout(location = 0) out vec4 oColor;

@@ -26,6 +26,10 @@ struct App
 {
     void UpdateEntityBuffer();
 
+    void ConfigureFrameBuffer(FrameBuffer& aConfig);
+
+    void RenderGeometry(const Program& aBindedProgram);
+
     // Loop
     f32  deltaTime;
     bool isRunning;
@@ -46,8 +50,9 @@ struct App
     std::vector<Program>    programs;
 
     // program indices
-    u32 texturedGeometryProgramIdx = 0;
-    u32 texturedMeshProgramIdx = 0;
+    GLuint renderToBackBufferShader;
+    GLuint renderToFrameBufferShader;
+    GLuint frameBufferToQuadShader;
 
     u32 patricioModel = 0;
     GLuint texturedMeshProgram_uTexture;
@@ -73,6 +78,8 @@ struct App
     // VAO object to link our screen filling quad with our textured quad shader
     GLuint vao;
 
+    std::vector<Light> lights;
+
     std::string openglDebugInfo;
 
     GLint maxUniformBufferSize;
@@ -80,8 +87,10 @@ struct App
     Buffer localUniformBuffer;
     std::vector<Entity> entities;
 
-    GLuint framebufferHandle;
-    GLuint colorAttachmentHandle;
+    GLuint globalParamsOffset;
+    GLuint globalParamsSize;
+
+    FrameBuffer deferredFrameBuffer;
 };
 
 void Init(App* app);
