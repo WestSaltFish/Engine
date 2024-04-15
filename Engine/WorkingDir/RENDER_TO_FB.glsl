@@ -12,7 +12,7 @@ struct Light
 	vec3 color;
 	vec3 direction;
 	vec3 position;
-}
+};
 
 layout(binding = 0, std140) uniform GlobalParams
 {
@@ -40,7 +40,7 @@ void main()
 	vViewDir = uCameraPosition - vPosition;
 
 	gl_Position = uWorldViewProjectionMatrix * vec4(aPosition, 1.0);
-}
+};
 
 #elif defined(FRAGMENT) ///////////////////////////////////////////////
 
@@ -50,14 +50,14 @@ struct Light
 	vec3 color;
 	vec3 direction;
 	vec3 position;
-}
+};
 
 layout(binding = 0, std140) uniform GlobalParams
 {
 	vec3 uCameraposition;
 	uint uLightCount;
 	Light ulight[16];
-}
+};
 
 in vec2 vTexCoord;
 in vec3 vPosition;
@@ -69,12 +69,14 @@ uniform sampler2D uTexture;
 layout(location = 0) out vec4 oAlbedo;
 layout(location = 1) out vec4 oNormal;
 layout(location = 2) out vec4 oPosition;
+layout(location = 3) out vec4 oViewDir;
 
 void main()
 {
 	oAlbedo = texture(uTexture, vTexCoord);
 	oNormal = vec4(vNormal, 1.0);
 	oPosition = vec4(vPosition, 1.0);
+	oViewDir = vec4(vViewDir, 1.0);
 }
 
 #endif

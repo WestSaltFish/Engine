@@ -1,47 +1,16 @@
-#ifdef RENDER_TO_BB
+#ifdef FB_TO_BB
 
 #if defined(VERTEX) ///////////////////////////////////////////////////
 
 layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aTexCoord;
-//layout(location = 3) in vec3 aTangent;
-//layout(location = 4) in vec3 aBitangent;
-
-struct Light
-{
-	uint type;
-	vec3 color;
-	vec3 direction;
-	vec3 position;
-};
-
-layout(binding = 0, std140) uniform GlobalParams
-{
-	vec3 uCameraPosition;
-	uint uLightCount;
-	Light uLight[16];
-};
-
-layout(binding = 1, std140) uniform localParams
-{
-	mat4 uWorldMatrix;
-	mat4 uWorldViewProjectionMatrix;
-};
 
 out vec2 vTexCoord;
-out vec3 vPosition;
-out vec3 vNormal;
-out vec3 vViewDir;
 
 void main()
 {
 	vTexCoord = aTexCoord;
-	vPosition = vec3(uWorldMatrix * vec4(aPosition, 1.0));
-	vNormal = vec3(uWorldMatrix * vec4(aNormal, 0.0));
-	vViewDir = uCameraPosition - vPosition;
-
-	gl_Position = uWorldViewProjectionMatrix * vec4(aPosition, 1.0);
+	gl_Position = vec4(aPosition, 1.0);
 }
 
 #elif defined(FRAGMENT) ///////////////////////////////////////////////
@@ -62,15 +31,18 @@ layout(binding = 0, std140) uniform GlobalParams
 };
 
 in vec2 vTexCoord;
-in vec3 vPosition;
-in vec3 vNormal;
-in vec3 vViewDir;
 
-uniform sampler2D uTexture;
+uniform sampler2D uAlbedo;
+uniform sampler2D uNormals;
+uniform sampler2D uPosition;
+uniform sampler2D uViewDir;
+
 layout(location = 0) out vec4 oColor;
 
 void CalculateBlitVars(in Light light, out vec3 ambient, out vec3 diffuse, out vec3 specular)
 {
+	vec3 vNormal = texture(uNormals, vTexCoord).xyz;
+	vec3 vViewDir = texture(uViewDir, vTexCoord).xyz;
 	vec3 lightDir = normalize(light.direction);
 
 	float ambientStrenght = 0.2f;
@@ -88,10 +60,10 @@ void CalculateBlitVars(in Light light, out vec3 ambient, out vec3 diffuse, out v
 
 void main()
 {
-	vec4 textureColor = texture(uTexture, vTexCoord);
+	vec4 textureColor = texture(uAlbedo, vTexCoord);
 	vec finalColor = vec4(0.0f);
 
-	for(int i = 0; i < uLightCount; ++i)
+	for(int i = 0; i< uLightCount; ++i)
 	{
 		vec3 lightResult = vec3(0.0f);
 
@@ -99,7 +71,7 @@ void main()
 		vec3 diffuse = vec3(0.0f);
 		vec3 specular = vec3(0.0f);
 
-		if(uLight[i].type == 0)
+		if(uLight[i].type == 0) // directional light
 		{
 			Light light = uLight[i];
 
@@ -108,18 +80,20 @@ void main()
 			lightResult = ambient + diffuse + specular;
 			finalColor += vec4(lightResult, 1.0f) * textureColor;
 		}
-		else
+		else // point light, Todo podria ser una funcion
 		{
-			Light light = uLight[i]
+			Light light = uLight[i];
+
 			float constant = 1.0f;
 			float linear = 0.09f;
 			float quadratic = 0.032f;
-			float distance = length(light.position - vPosition);
+			float distance = length(light.position - texture(uPosition, vTexdCoord).xyz);
 			float attenuation = 1.0f / (constant + linear * distance + quadraric * pow(distance, 2));
 
 			CalculateBlitVars(light, ambient, diffuse, specular);
 
 			lightResult = (ambien * attenuation) + (diffuse * attenuation) + (specular * attenuation);
+		
 			finalColor += vec4(lightResult, 1.0) * textureColor;
 		}
 	}
