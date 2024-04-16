@@ -54,9 +54,9 @@ struct Light
 
 layout(binding = 0, std140) uniform GlobalParams
 {
-	vec3 uCameraposition;
+	vec3 uCameraPosition;
 	uint uLightCount;
-	Light ulight[16];
+	Light uLight[16];
 };
 
 in vec2 vTexCoord;

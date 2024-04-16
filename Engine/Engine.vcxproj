@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Engine_model_reference\Code\BufferSupFuncs.cpp" />
+    <ClCompile Include="Code\BufferSupFuncs.cpp" />
     <ClCompile Include="Code\engine.cpp" />
     <ClCompile Include="Code\ModelLoadingFuncs.cpp" />
     <ClCompile Include="Code\platform.cpp" />
@@ -34,7 +34,7 @@
     <ClCompile Include="ThirdParty\stb\stb.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Engine_model_reference\Code\BufferSupFuncs.h" />
+    <ClInclude Include="Code\BufferSupFuncs.h" />
     <ClInclude Include="Code\engine.h" />
     <ClInclude Include="Code\Globals.h" />
     <ClInclude Include="Code\ModelLoadingFuncs.h" />

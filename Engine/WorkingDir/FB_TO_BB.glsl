@@ -25,9 +25,9 @@ struct Light
 
 layout(binding = 0, std140) uniform GlobalParams
 {
-	vec3 uCameraposition;
+	vec3 uCameraPosition;
 	uint uLightCount;
-	Light ulight[16];
+	Light uLight[16];
 };
 
 in vec2 vTexCoord;
@@ -61,7 +61,7 @@ void CalculateBlitVars(in Light light, out vec3 ambient, out vec3 diffuse, out v
 void main()
 {
 	vec4 textureColor = texture(uAlbedo, vTexCoord);
-	vec finalColor = vec4(0.0f);
+	vec4 finalColor = vec4(0.0f);
 
 	for(int i = 0; i< uLightCount; ++i)
 	{
@@ -87,12 +87,12 @@ void main()
 			float constant = 1.0f;
 			float linear = 0.09f;
 			float quadratic = 0.032f;
-			float distance = length(light.position - texture(uPosition, vTexdCoord).xyz);
-			float attenuation = 1.0f / (constant + linear * distance + quadraric * pow(distance, 2));
+			float distance = length(light.position - texture(uPosition, vTexCoord).xyz);
+			float attenuation = 1.0f / (constant + linear * distance + quadratic * pow(distance, 2));
 
 			CalculateBlitVars(light, ambient, diffuse, specular);
 
-			lightResult = (ambien * attenuation) + (diffuse * attenuation) + (specular * attenuation);
+			lightResult = (ambient * attenuation) + (diffuse * attenuation) + (specular * attenuation);
 		
 			finalColor += vec4(lightResult, 1.0) * textureColor;
 		}
