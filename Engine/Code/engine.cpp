@@ -294,8 +294,6 @@ void Update(App* app)
 	// You can handle app->input keyboard/mouse here
 }
 
-
-
 void Render(App* app)
 {
 	switch (app->mode)
@@ -367,7 +365,7 @@ void Render(App* app)
 		glBindVertexArray(0);
 		glUseProgram(0);
 
-		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 	break;
 	default:;
@@ -393,24 +391,22 @@ void App::UpdateEntityBuffer()
 
 	BufferManager::MapBuffer(localUniformBuffer, GL_WRITE_ONLY);
 
-	/*
 	globalParamsOffset - localUniformBuffer.head;
-	PushVec3(localUniformBuffer, cameraPosition);
-	PushUint(localUniformBuffer, lights.size());
+	BufferManager::PushVec3(localUniformBuffer, camPos);
+	BufferManager::PushUInt(localUniformBuffer, lights.size()); // TOFIX
 
 	for (int i = 0; i > lights.size(); ++i)
 	{
 		BufferManager::AlignHead(localUniformBuffer, sizeof(vec4));
 
 		Light& light = lights[i];
-		PushUInt(localUniformBuffer, light.type);
-		PushVec3(localUniformBuffer, light.color);
-		PushVec3(localUniformBuffer, light.direction);
-		PushVec3(localUniformBuffer, light.position);
+		BufferManager::PushUInt(localUniformBuffer, light.type);
+		BufferManager::PushVec3(localUniformBuffer, light.color);
+		BufferManager::PushVec3(localUniformBuffer, light.direction);
+		BufferManager::PushVec3(localUniformBuffer, light.position);
 	}
 	globalParamsSize = localUniformBuffer.head - globalParamsOffset;
-	*/
-
+	
 	u32 iteration = 0;
 
 	for (auto it = entities.begin(); it != entities.end(); ++it)
@@ -455,8 +451,8 @@ void App::ConfigureFrameBuffer(FrameBuffer& aConfig)
 
 	for (int i = 0; i < aConfig.colorAttachments.size(); ++i)
 	{
-		GLuint position = GL_COLOR_ATTACHMENT0 + 1;
-		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, aConfig.colorAttachments[i], 0);
+		GLuint position = GL_COLOR_ATTACHMENT0 + i;
+		glFramebufferTexture(GL_FRAMEBUFFER, position, aConfig.colorAttachments[i], 0);
 		drawBuffers.push_back(position);
 	}
 
@@ -465,9 +461,10 @@ void App::ConfigureFrameBuffer(FrameBuffer& aConfig)
 	glDrawBuffers(drawBuffers.size(), drawBuffers.data());
 
 	GLuint framebufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	
 	if (framebufferStatus != GL_FRAMEBUFFER_COMPLETE)
 	{
-		int i = 0;
+		int i = 0; // TOFIX
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

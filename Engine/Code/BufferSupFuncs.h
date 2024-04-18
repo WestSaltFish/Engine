@@ -10,7 +10,7 @@ namespace BufferManager
     #define CreateStaticIndexBuffer(size) CreateBuffer(size, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW)
 
     #define PushData(buffer, data, size) PushAlignedData(buffer, data, size, 1)
-    #define PushUInt(buffer, value) { u32 v = value; PushAlignedData(buffer, &v, sizeof(v), 4); }
+    #define PushUInt(buffer, value) ()=> { u32 v = value; PushAlignedData(buffer, &v, sizeof(v), 4); } // TOFIX
     #define PushVec3(buffer, value) PushAlignedData(buffer, value_ptr(value), sizeof(value), sizeof(vec4))
     #define PushVec4(buffer, value) PushAlignedData(buffer, value_ptr(value), sizeof(value), sizeof(vec4))
     #define PushMat3(buffer, value) PushAlignedData(buffer, value_ptr(value), sizeof(value), sizeof(vec4))

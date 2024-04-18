@@ -1,7 +1,6 @@
 //
 // engine.h: This file contains the types and functions relative to the engine.
 //
-
 #pragma once
 
 #include "platform.h"
@@ -102,4 +101,3 @@ void Gui(App* app);
 void Update(App* app);
 
 void Render(App* app);
-
