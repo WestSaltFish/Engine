@@ -245,7 +245,7 @@ void Init(App* app)
 	app->entities.push_back({ TransformPositionScale(vec3(-0.0, 1.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0});
 	app->entities.push_back({ TransformPositionScale(vec3(-5.0, 1.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0});
 
-	app->entities.push_back({ TransformPositionScale(vec3(0.0, -2.0, 0.0), vec3(1.0, 1.0, 1.0)), GroundModelIndex, 0, 0});
+	//app->entities.push_back({ TransformPositionScale(vec3(0.0, -2.0, 0.0), vec3(1.0, 1.0, 1.0)), GroundModelIndex, 0, 0});
 
 	app->lights.push_back({ LightType::LightType_Directional, vec3(1.0, 1.0, 1.0),vec3(1.0, -1.0, 1.0),vec3(0, 0, 0)});
 	app->lights.push_back({ LightType::LighthType_point, vec3(0.0, 1.0, 0.0),vec3(1.0, 1.0, 1.0),vec3(0, 0, 0)});
@@ -334,8 +334,11 @@ void Render(App* app)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// Render to BB from ColorAtt.
+
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		
 		glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
 		const Program& FBToBB = app->programs[app->framebufferToQuadShader];
@@ -392,7 +395,7 @@ void App::UpdateEntityBuffer()
 
 	BufferManager::MapBuffer(localUniformBuffer, GL_WRITE_ONLY);
 	
-	globalParamsOffset - localUniformBuffer.head;
+	//globalParamsOffset - localUniformBuffer.head;
 	PushVec3(localUniformBuffer, camPos);
 	PushUInt(localUniformBuffer, lights.size());
 
@@ -430,7 +433,7 @@ void App::UpdateEntityBuffer()
 void App::ConfigureFrameBuffer(FrameBuffer& aConfig)
 {
 	aConfig.colorAttachments.push_back(CreateTexture());
-	aConfig.colorAttachments.push_back(CreateTexture());
+	aConfig.colorAttachments.push_back(CreateTexture(true));
 	aConfig.colorAttachments.push_back(CreateTexture(true));
 	aConfig.colorAttachments.push_back(CreateTexture(true));
 
@@ -465,7 +468,7 @@ void App::ConfigureFrameBuffer(FrameBuffer& aConfig)
 	
 	if (framebufferStatus != GL_FRAMEBUFFER_COMPLETE)
 	{
-		int i = 0; // TOFIX
+		int i = 0;
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
