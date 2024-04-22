@@ -55,7 +55,6 @@ struct App
     GLuint renderToFrameBufferShader;
     GLuint framebufferToQuadShader;
 
-    u32 patricioModel = 0;
     GLuint texturedMeshProgram_uTexture;
     
     // texture indices
@@ -79,14 +78,13 @@ struct App
     // VAO object to link our screen filling quad with our textured quad shader
     GLuint vao;
 
-    std::vector<Light> lights;
-
     std::string openglDebugInfo;
 
     GLint maxUniformBufferSize;
     GLint uniformBlockAligment;
     Buffer localUniformBuffer;
     std::vector<Entity> entities;
+    std::vector<Light> lights;
 
     GLuint globalParamsOffset;
     GLuint globalParamsSize;

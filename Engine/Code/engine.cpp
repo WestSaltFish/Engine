@@ -217,7 +217,6 @@ void Init(App* app)
 	glGenVertexArrays(1, &app->vao);
 	glBindVertexArray(app->vao);
 	glBindBuffer(GL_ARRAY_BUFFER, app->embeddedVertices);
-
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexV3V2), (void*)0);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VertexV3V2), (void*)12);
@@ -233,7 +232,7 @@ void Init(App* app)
 	const Program& texturedMeshProgram = app->programs[app->renderToBackBufferShader];
 	app->texturedMeshProgram_uTexture = glGetUniformLocation(texturedMeshProgram.handle, "uTexture");
 	u32 PatricModelIndex = ModelLoader::LoadModel(app, "Patrick/Patrick.obj");
-	u32 GroundModelIndex = ModelLoader::LoadModel(app, "Patrick/ground.obj");
+	u32 GroundModelIndex = ModelLoader::LoadModel(app, "Patrick/Ground.obj");
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -242,11 +241,11 @@ void Init(App* app)
 
 	app->localUniformBuffer = BufferManager::CreateConstantBuffer(app->maxUniformBufferSize);
 
-	app->entities.push_back({ TransformPositionScale(vec3(5.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0});
-	app->entities.push_back({ TransformPositionScale(vec3(0.0, 1.0, 5.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0});
-	app->entities.push_back({ TransformPositionScale(vec3(-5.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0});
+	app->entities.push_back({ TransformPositionScale(vec3(-10.0, 1.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0});
+	app->entities.push_back({ TransformPositionScale(vec3(-0.0, 1.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0});
+	app->entities.push_back({ TransformPositionScale(vec3(-5.0, 1.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0});
 
-	app->entities.push_back({ TransformPositionScale(vec3(0.0, -5.0, 0.0), vec3(1.0, 1.0, 1.0)), GroundModelIndex, 0, 0});
+	app->entities.push_back({ TransformPositionScale(vec3(0.0, -2.0, 0.0), vec3(1.0, 1.0, 1.0)), GroundModelIndex, 0, 0});
 
 	app->lights.push_back({ LightType::LightType_Directional, vec3(1.0, 1.0, 1.0),vec3(1.0, -1.0, 1.0),vec3(0, 0, 0)});
 	app->lights.push_back({ LightType::LighthType_point, vec3(0.0, 1.0, 0.0),vec3(1.0, 1.0, 1.0),vec3(0, 0, 0)});
@@ -302,12 +301,14 @@ void Render(App* app)
 	{
 		app->UpdateEntityBuffer();
 
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
-		const Program& forwardProgram = app->programs[app->renderToFrameBufferShader];
+		const Program& forwardProgram = app->programs[app->renderToBackBufferShader];
 		glUseProgram(forwardProgram.handle);
 
 		app->RenderGeometry(forwardProgram);
@@ -347,15 +348,15 @@ void Render(App* app)
 		glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.colorAttachments[0]);
 		glUniform1i(glGetUniformLocation(FBToBB.handle, "uAlbedo"), 0);
 
-		glActiveTexture(GL_TEXTURE0);
+		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.colorAttachments[1]);
 		glUniform1i(glGetUniformLocation(FBToBB.handle, "uNormals"), 1);
-		glActiveTexture(GL_TEXTURE0);
-
+		
+		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.colorAttachments[2]);
 		glUniform1i(glGetUniformLocation(FBToBB.handle, "uPosition"), 2);
-		glActiveTexture(GL_TEXTURE0);
-
+		
+		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.colorAttachments[3]);
 		glUniform1i(glGetUniformLocation(FBToBB.handle, "uViewDir"), 3);
 
@@ -390,20 +391,20 @@ void App::UpdateEntityBuffer()
 	glm::mat4 view = glm::lookAt(camPos, target, yCam);
 
 	BufferManager::MapBuffer(localUniformBuffer, GL_WRITE_ONLY);
-
+	
 	globalParamsOffset - localUniformBuffer.head;
-	BufferManager::PushVec3(localUniformBuffer, camPos);
-	BufferManager::PushUInt(localUniformBuffer, lights.size()); // TOFIX
+	PushVec3(localUniformBuffer, camPos);
+	PushUInt(localUniformBuffer, lights.size());
 
-	for (int i = 0; i > lights.size(); ++i)
+	for (int i = 0; i < lights.size(); ++i)
 	{
 		BufferManager::AlignHead(localUniformBuffer, sizeof(vec4));
 
 		Light& light = lights[i];
-		BufferManager::PushUInt(localUniformBuffer, light.type);
-		BufferManager::PushVec3(localUniformBuffer, light.color);
-		BufferManager::PushVec3(localUniformBuffer, light.direction);
-		BufferManager::PushVec3(localUniformBuffer, light.position);
+		PushUInt(localUniformBuffer, light.type);
+		PushVec3(localUniformBuffer, light.color);
+		PushVec3(localUniformBuffer, light.direction);
+		PushVec3(localUniformBuffer, light.position);
 	}
 	globalParamsSize = localUniformBuffer.head - globalParamsOffset;
 	
@@ -411,14 +412,14 @@ void App::UpdateEntityBuffer()
 
 	for (auto it = entities.begin(); it != entities.end(); ++it)
 	{
-		glm::mat4 world = TransformPositionScale(vec3(0.0f + (1.0 * iteration), 2.0, 0.0), vec3(0.45));
+		glm::mat4 world = it->worldMatrix;
 		glm::mat4 WVP = projection * view * world;
 
 		Buffer& localBuffer = localUniformBuffer;
 		BufferManager::AlignHead(localBuffer, uniformBlockAligment);
 		it->localParamOffset = localBuffer.head;
-		BufferManager::PushMat4(localBuffer, world);
-		BufferManager::PushMat4(localBuffer, WVP);
+		PushMat4(localBuffer, world);
+		PushMat4(localBuffer, WVP);
 		it->localParamSize = localBuffer.head - it->localParamOffset;
 		++iteration;
 	}
@@ -478,7 +479,7 @@ void App::RenderGeometry(const Program& aBindedProgram)
 	{
 		glBindBufferRange(GL_UNIFORM_BUFFER, BINDING(1), localUniformBuffer.handle, it->localParamOffset, it->localParamSize);
 
-		Model& model = models[patricioModel];
+		Model& model = models[it->modelIndex];
 		Mesh& mesh = meshes[model.meshIdx];
 
 		for (u32 i = 0; i < mesh.submeshes.size(); ++i)
