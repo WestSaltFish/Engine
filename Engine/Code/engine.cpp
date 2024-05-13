@@ -247,7 +247,7 @@ void Init(App* app)
 	app->entities.push_back({ TransformPositionScale(vec3(-0.0, 0.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0 });
 	app->entities.push_back({ TransformPositionScale(vec3(-5.0, 0.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0 });
 
-	//app->entities.push_back({ TransformPositionScale(vec3(0.0, -2.0, 0.0), vec3(1.0, 1.0, 1.0)), GroundModelIndex, 0, 0});
+	app->entities.push_back({ TransformPositionScale(vec3(0.0, -2.0, 0.0), vec3(1.0, 1.0, 0.0)), GroundModelIndex, 0, 0});
 
 	app->lights.push_back({ LightType::LightType_Directional, vec3(1.0, 1.0, 1.0),vec3(1.0, -1.0, 1.0),vec3(0, 0, 0) });
 	app->lights.push_back({ LightType::LighthType_point, vec3(0.0, 1.0, 0.0),vec3(1.0, 1.0, 1.0),vec3(0, 0, 0) });
