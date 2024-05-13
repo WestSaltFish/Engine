@@ -165,6 +165,7 @@ struct Material
     u32             specularTextureIdx;
     u32             normalsTextureIdx;
     u32             bumpTextureIdx;
+    int             useTexture;
 };
 
 struct Buffer {

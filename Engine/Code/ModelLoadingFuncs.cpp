@@ -186,6 +186,15 @@ namespace ModelLoader
         myMaterial.smoothness = shininess / 256.0f;
 
         aiString aiFilename;
+
+        if (material->GetTextureCount(aiTextureType_DIFFUSE) <= 0)
+        {
+            myMaterial.useTexture = 0;
+            return;
+        }
+
+        myMaterial.useTexture = 1;
+
         if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
         {
             material->GetTexture(aiTextureType_DIFFUSE, 0, &aiFilename);

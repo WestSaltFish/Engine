@@ -65,6 +65,8 @@ in vec3 vNormal;
 in vec3 vViewDir;
 
 uniform sampler2D uTexture;
+uniform vec3 uAlbedo;
+uniform int useTexture;
 
 layout(location = 0) out vec4 oAlbedo;
 layout(location = 1) out vec4 oNormal;
