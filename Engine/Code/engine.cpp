@@ -225,14 +225,16 @@ void Init(App* app)
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+	// Load shaders
 	app->renderToBackBufferShader = LoadProgram(app, "RENDER_TO_BB.glsl", "RENDER_TO_BB");
 	app->renderToFrameBufferShader = LoadProgram(app, "RENDER_TO_FB.glsl", "RENDER_TO_FB");
 	app->framebufferToQuadShader = LoadProgram(app, "FB_TO_BB.glsl", "FB_TO_BB");
 
+	// Load models
 	const Program& texturedMeshProgram = app->programs[app->renderToBackBufferShader];
 	app->texturedMeshProgram_uTexture = glGetUniformLocation(texturedMeshProgram.handle, "uTexture");
-	u32 PatricModelIndex = ModelLoader::LoadModel(app, "Patrick/Patrick.obj");
-	u32 GroundModelIndex = ModelLoader::LoadModel(app, "Patrick/Ground.obj");
+	u32 PatricModelIndex = ModelLoader::LoadModel(app, "Models/Substitute/ob0226_00.obj");
+	u32 GroundModelIndex = ModelLoader::LoadModel(app, "Models/Ground.obj");
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -241,14 +243,14 @@ void Init(App* app)
 
 	app->localUniformBuffer = BufferManager::CreateConstantBuffer(app->maxUniformBufferSize);
 
-	app->entities.push_back({ TransformPositionScale(vec3(-10.0, 1.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0});
-	app->entities.push_back({ TransformPositionScale(vec3(-0.0, 1.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0});
-	app->entities.push_back({ TransformPositionScale(vec3(-5.0, 1.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0});
+	app->entities.push_back({ TransformPositionScale(vec3(-10.0, 0.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0 });
+	app->entities.push_back({ TransformPositionScale(vec3(-0.0, 0.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0 });
+	app->entities.push_back({ TransformPositionScale(vec3(-5.0, 0.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0 });
 
 	//app->entities.push_back({ TransformPositionScale(vec3(0.0, -2.0, 0.0), vec3(1.0, 1.0, 1.0)), GroundModelIndex, 0, 0});
 
-	app->lights.push_back({ LightType::LightType_Directional, vec3(1.0, 1.0, 1.0),vec3(1.0, -1.0, 1.0),vec3(0, 0, 0)});
-	app->lights.push_back({ LightType::LighthType_point, vec3(0.0, 1.0, 0.0),vec3(1.0, 1.0, 1.0),vec3(0, 0, 0)});
+	app->lights.push_back({ LightType::LightType_Directional, vec3(1.0, 1.0, 1.0),vec3(1.0, -1.0, 1.0),vec3(0, 0, 0) });
+	app->lights.push_back({ LightType::LighthType_point, vec3(0.0, 1.0, 0.0),vec3(1.0, 1.0, 1.0),vec3(0, 0, 0) });
 
 	app->ConfigureFrameBuffer(app->deferredFrameBuffer);
 
@@ -338,7 +340,7 @@ void Render(App* app)
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		
+
 		glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
 		const Program& FBToBB = app->programs[app->framebufferToQuadShader];
@@ -354,11 +356,11 @@ void Render(App* app)
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.colorAttachments[1]);
 		glUniform1i(glGetUniformLocation(FBToBB.handle, "uNormals"), 1);
-		
+
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.colorAttachments[2]);
 		glUniform1i(glGetUniformLocation(FBToBB.handle, "uPosition"), 2);
-		
+
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, app->deferredFrameBuffer.colorAttachments[3]);
 		glUniform1i(glGetUniformLocation(FBToBB.handle, "uViewDir"), 3);
@@ -394,7 +396,7 @@ void App::UpdateEntityBuffer()
 	glm::mat4 view = glm::lookAt(camPos, target, yCam);
 
 	BufferManager::MapBuffer(localUniformBuffer, GL_WRITE_ONLY);
-	
+
 	//globalParamsOffset - localUniformBuffer.head;
 	PushVec3(localUniformBuffer, camPos);
 	PushUInt(localUniformBuffer, lights.size());
@@ -410,7 +412,7 @@ void App::UpdateEntityBuffer()
 		PushVec3(localUniformBuffer, light.position);
 	}
 	globalParamsSize = localUniformBuffer.head - globalParamsOffset;
-	
+
 	u32 iteration = 0;
 
 	for (auto it = entities.begin(); it != entities.end(); ++it)
@@ -465,7 +467,7 @@ void App::ConfigureFrameBuffer(FrameBuffer& aConfig)
 	glDrawBuffers(drawBuffers.size(), drawBuffers.data());
 
 	GLuint framebufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	
+
 	if (framebufferStatus != GL_FRAMEBUFFER_COMPLETE)
 	{
 		int i = 0;
