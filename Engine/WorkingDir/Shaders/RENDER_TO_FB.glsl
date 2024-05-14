@@ -75,7 +75,13 @@ layout(location = 3) out vec4 oViewDir;
 
 void main()
 {
-	oAlbedo = texture(uTexture, vTexCoord);
+	oAlbedo = vec4(uAlbedo, 255);
+
+	if(useTexture == 1)
+	{
+		oAlbedo = texture(uTexture, vTexCoord);
+	}
+
 	oNormal = vec4(vNormal, 1.0);
 	oPosition = vec4(vPosition, 1.0);
 	oViewDir = vec4(vViewDir, 1.0);
