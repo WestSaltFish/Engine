@@ -75,7 +75,7 @@ layout(location = 3) out vec4 oViewDir;
 
 void main()
 {
-	oAlbedo = vec4(uAlbedo, 255);
+	oAlbedo = vec4(uAlbedo, 1.0);
 
 	if(useTexture == 1)
 	{

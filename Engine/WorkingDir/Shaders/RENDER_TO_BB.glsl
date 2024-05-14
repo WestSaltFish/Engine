@@ -88,12 +88,14 @@ void CalculateBlitVars(in Light light, out vec3 ambient, out vec3 diffuse, out v
 
 void main()
 {
-	vec4 textureColor = vec4(uAlbedo, 1);
+	vec4 textureColor = vec4(uAlbedo, 1.0);
 
 	if(useTexture == 1)
 	{
 		textureColor = texture(uTexture, vTexCoord);
 	}
+
+	vec4 finalColor = vec4(0.0f);
 
 	for(int i = 0; i < uLightCount; ++i)
 	{

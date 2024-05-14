@@ -234,7 +234,7 @@ void Init(App* app)
 	app->texturedMeshProgram_uTexture = glGetUniformLocation(texturedMeshProgram.handle, "uTexture");
 
 	// Load models
-	u32 PatricModelIndex = ModelLoader::LoadModel(app, "Models/Substitute/ob0226_00.obj");
+	u32 ModelIndex = ModelLoader::LoadModel(app, "Models/Substitute/ob0226_00.obj");
 	u32 GroundModelIndex = ModelLoader::LoadModel(app, "Models/Ground.obj");
 
 	glEnable(GL_DEPTH_TEST);
@@ -244,11 +244,11 @@ void Init(App* app)
 
 	app->localUniformBuffer = BufferManager::CreateConstantBuffer(app->maxUniformBufferSize);
 
-	app->entities.push_back({ TransformPositionScale(vec3(-10.0, 0.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0 });
-	app->entities.push_back({ TransformPositionScale(vec3(-0.0, 0.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0 });
-	app->entities.push_back({ TransformPositionScale(vec3(-5.0, 0.0, -2.0), vec3(1.0, 1.0, 1.0)), PatricModelIndex, 0, 0 });
+	app->entities.push_back({ TransformPositionScale(vec3(-10.0, 0.0, -2.0), vec3(1.0, 1.0, 1.0)), ModelIndex, 0, 0 });
+	app->entities.push_back({ TransformPositionScale(vec3(-0.0, 0.0, -2.0), vec3(1.0, 1.0, 1.0)), ModelIndex, 0, 0 });
+	app->entities.push_back({ TransformPositionScale(vec3(-5.0, 0.0, -2.0), vec3(1.0, 1.0, 1.0)), ModelIndex, 0, 0 });
 
-	app->entities.push_back({ TransformPositionScale(vec3(0.0, -2.0, 0.0), vec3(1.0, 1.0, 1.0)), GroundModelIndex, 0, 0});
+	app->entities.push_back({ TransformPositionScale(vec3(0.0, 0.0, 0.0), vec3(10.0, 1.0, 10.0)), GroundModelIndex, 0, 0});
 
 	app->lights.push_back({ LightType::LightType_Directional, vec3(1.0, 1.0, 1.0),vec3(1.0, -1.0, 1.0),vec3(0, 0, 0) });
 	app->lights.push_back({ LightType::LighthType_point, vec3(0.0, 1.0, 0.0),vec3(1.0, 1.0, 1.0),vec3(0, 0, 0) });
@@ -313,7 +313,6 @@ void Render(App* app)
 
 		const Program& forwardProgram = app->programs[app->renderToBackBufferShader];
 		glUseProgram(forwardProgram.handle);
-
 		app->RenderGeometry(forwardProgram);
 	}
 	break;
@@ -334,13 +333,12 @@ void Render(App* app)
 		const Program& deferredProgram = app->programs[app->renderToFrameBufferShader];
 		glUseProgram(deferredProgram.handle);
 		app->RenderGeometry(deferredProgram);
+
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// Render to BB from ColorAtt.
-
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
 		glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
@@ -499,8 +497,8 @@ void App::RenderGeometry(const Program& aBindedProgram)
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, textures[subMeshMaterial.albedoTextureIdx].handle);
 			glUniform1i(texturedMeshProgram_uTexture, 0);
-
-			glUniform3fv(glGetUniformLocation(aBindedProgram.handle, "u_color"), 1, glm::value_ptr(subMeshMaterial.albedo));
+			
+			glUniform3fv(glGetUniformLocation(aBindedProgram.handle, "uAlbedo"), 1, glm::value_ptr(subMeshMaterial.albedo));
 			glUniform1i(glGetUniformLocation(aBindedProgram.handle, "useTexture"), subMeshMaterial.useTexture);
 
 			SubMesh& submesh = mesh.submeshes[i];
