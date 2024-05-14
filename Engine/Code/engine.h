@@ -90,6 +90,8 @@ struct App
     GLuint globalParamsSize;
 
     FrameBuffer deferredFrameBuffer;
+
+    Camera camera;
 };
 
 void Init(App* app);
@@ -99,3 +101,5 @@ void Gui(App* app);
 void Update(App* app);
 
 void Render(App* app);
+
+void UpdateCamera(App* app);

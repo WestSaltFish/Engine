@@ -255,6 +255,12 @@ void Init(App* app)
 
 	app->ConfigureFrameBuffer(app->deferredFrameBuffer);
 
+	// Init camera
+	app->camera.cameraPos = glm::vec3(0.0f, 5.0f, 15.0f);
+	app->camera.cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+	app->camera.cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+	app->camera.moveSpeed = 20.0f;
+
 	app->mode = Mode::Mode_Deferred;
 }
 
@@ -294,6 +300,59 @@ void Gui(App* app)
 void Update(App* app)
 {
 	// You can handle app->input keyboard/mouse here
+	UpdateCamera(app);
+}
+
+void UpdateCamera(App* app)
+{
+	float moveSpeed = app->camera.moveSpeed * app->deltaTime;
+
+	// camera movement
+	if (app->input.keys[Key::K_W] == ButtonState::BUTTON_PRESSED)
+	{
+		app->camera.cameraPos += app->camera.cameraFront * moveSpeed;
+	}
+	if (app->input.keys[Key::K_S] == ButtonState::BUTTON_PRESSED)
+	{
+		app->camera.cameraPos -= app->camera.cameraFront * moveSpeed;
+	}
+	if (app->input.keys[Key::K_A] == ButtonState::BUTTON_PRESSED)
+	{
+		app->camera.cameraPos -= glm::normalize(glm::cross(app->camera.cameraFront, app->camera.cameraUp)) * moveSpeed;
+	}
+	if (app->input.keys[Key::K_D] == ButtonState::BUTTON_PRESSED)
+	{
+		app->camera.cameraPos += glm::normalize(glm::cross(app->camera.cameraFront, app->camera.cameraUp)) * moveSpeed;
+	}
+
+	// camera rotation
+	if (app->input.mouseButtons[MouseButton::RIGHT] == ButtonState::BUTTON_PRESSED)
+	{
+		/*
+		float xoffset = xpos - lastX;
+		float yoffset = lastY - ypos;
+		lastX = xpos;
+		lastY = ypos;
+
+		float sensitivity = 0.1f;
+		xoffset *= sensitivity;
+		yoffset *= sensitivity;
+
+		yaw += xoffset;
+		pitch += yoffset;
+
+		if (pitch > 89.0f)
+			pitch = 89.0f;
+		if (pitch < -89.0f)
+			pitch = -89.0f;
+
+		glm::vec3 direction;
+		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		direction.y = sin(glm::radians(pitch));
+		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		app->camera.cameraFront = glm::normalize(direction);
+		*/
+	}
 }
 
 void Render(App* app)
@@ -385,19 +444,12 @@ void App::UpdateEntityBuffer()
 	float zfar = 1000.0f;
 	glm::mat4 projection = glm::perspective(glm::radians(60.0f), aspecRatio, znear, zfar);
 
-	vec3 target = vec3(0, 0, 0);
-	vec3 camPos = vec3(5, 5, 5);
-
-	vec3 zCam = glm::normalize(camPos - target);
-	vec3 xCam = glm::cross(zCam, vec3(0, 1, 0));
-	vec3 yCam = glm::cross(xCam, zCam);
-
-	glm::mat4 view = glm::lookAt(camPos, target, yCam);
+	glm::mat4 view = glm::lookAt(camera.cameraPos, camera.cameraPos + camera.cameraFront, camera.cameraUp);
 
 	BufferManager::MapBuffer(localUniformBuffer, GL_WRITE_ONLY);
 
 	//globalParamsOffset - localUniformBuffer.head;
-	PushVec3(localUniformBuffer, camPos);
+	PushVec3(localUniformBuffer, camera.cameraPos);
 	PushUInt(localUniformBuffer, lights.size());
 
 	for (int i = 0; i < lights.size(); ++i)

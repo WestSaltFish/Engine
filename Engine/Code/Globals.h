@@ -204,6 +204,15 @@ struct FrameBuffer
     GLuint depthHandle;
 };
 
+struct Camera
+{
+    glm::vec3 cameraPos;
+    glm::vec3 cameraFront;
+    glm::vec3 cameraUp;
+    glm::vec3 cameraTarget;
+    float moveSpeed;
+};
+
 #define ILOG(...)                 \
 {                                 \
 char logBuffer[1024] = {};        \
