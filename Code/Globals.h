@@ -53,6 +53,7 @@ enum ButtonState {
 
 struct Input {
     glm::vec2   mousePos;
+    glm::vec2   mouseLastPos;
     glm::vec2   mouseDelta;
     ButtonState mouseButtons[MOUSE_BUTTON_COUNT];
     ButtonState keys[KEY_COUNT];
@@ -211,10 +212,11 @@ struct Camera
     glm::vec3 up;
     glm::vec3 cameraTarget;
 
-    float yaw;
-    float pitch;
+    float yaw = -90.0f;
+    float pitch = 0.0f;
+    float rotationSensitive = 0.1f;
 
-    float moveSpeed;
+    float moveSpeed = 20.0f;
     float aspecRatio = 0.0;
     float znear = 0.1f;
     float zfar = 1000.0f;

@@ -105,7 +105,7 @@ void main()
 		vec3 diffuse = vec3(0.0f);
 		vec3 specular = vec3(0.0f);
 
-		if(uLight[i].type == 0)
+		if(uLight[i].type == 0) // directional light
 		{
 			Light light = uLight[i];
 
@@ -114,7 +114,7 @@ void main()
 			lightResult = ambient + diffuse + specular;
 			finalColor += vec4(lightResult, 1.0f) * textureColor;
 		}
-		else
+		else // point light
 		{
 			Light light = uLight[i];
 			float constant = 1.0f;

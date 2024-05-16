@@ -260,7 +260,6 @@ void Init(App* app)
 	app->camera.pos = glm::vec3(0.0f, 5.0f, 15.0f);
 	app->camera.front = glm::vec3(0.0f, 0.0f, -1.0f);
 	app->camera.up = glm::vec3(0.0f, 1.0f, 0.0f);
-	app->camera.moveSpeed = 20.0f;
 
 	app->mode = Mode::Mode_Deferred;
 }
@@ -270,6 +269,26 @@ void Gui(App* app)
 	ImGui::Begin("Info");
 	ImGui::Text("FPS: %f", 1.0f / app->deltaTime);
 	ImGui::Text("%s", app->openglDebugInfo.c_str());
+
+	//ImGui::ShowDemoWindow();
+
+	if (ImGui::CollapsingHeader("Camera"))
+	{
+		ImGui::SliderFloat("movement speed", &app->camera.moveSpeed, 0.0, 100.0);
+		ImGui::SliderFloat("rotation sensitive", &app->camera.rotationSensitive, 0.0, 1.0);
+	}
+	if (ImGui::CollapsingHeader("Lights"))
+	{
+		if (app->lights.size() > 0)
+			ImGui::ColorEdit3("Directional light color", (float*)&app->lights[0].color);
+
+		if (app->lights.size() > 1)
+			ImGui::ColorEdit3("Point light color", (float*)&app->lights[1].color);
+		//ImGui::SliderFloat("movement speed", &app->camera.moveSpeed, 0.0, 100.0);
+		//ImGui::SliderFloat("rotation sensitive", &app->camera.rotationSensitive, 0.0, 1.0);
+	}
+
+	ImGui::Spacing();
 
 	const char* RenderModes[] = { "FORWARD", "DEFERRED" };
 	if (ImGui::BeginCombo("Render Mode", RenderModes[app->mode]))
@@ -327,32 +346,30 @@ void UpdateCamera(App* app)
 	}
 
 	// camera rotation
-	if (app->input.mouseButtons[MouseButton::RIGHT] == ButtonState::BUTTON_PRESSED)
+	if (app->input.mouseButtons[MouseButton::RIGHT] == ButtonState::BUTTON_PRESS)
 	{
-		/*
-		float xoffset = xpos - lastX;
-		float yoffset = lastY - ypos;
-		lastX = xpos;
-		lastY = ypos;
+		app->input.mouseLastPos = app->input.mousePos;
+	}
+	else if (app->input.mouseButtons[MouseButton::RIGHT] == ButtonState::BUTTON_PRESSED)
+	{
+		float xoffset = app->input.mousePos.x - app->input.mouseLastPos.x;
+		float yoffset = app->input.mouseLastPos.y - app->input.mousePos.y;
 
-		float sensitivity = 0.1f;
-		xoffset *= sensitivity;
-		yoffset *= sensitivity;
+		app->input.mouseLastPos = app->input.mousePos;
 
-		yaw += xoffset;
-		pitch += yoffset;
+		xoffset *= app->camera.rotationSensitive;
+		yoffset *= app->camera.rotationSensitive;
 
-		if (pitch > 89.0f)
-			pitch = 89.0f;
-		if (pitch < -89.0f)
-			pitch = -89.0f;
+		app->camera.yaw += xoffset;
+		app->camera.pitch += yoffset;
+
+		app->camera.pitch = app->camera.pitch > 89.0 ? 89.0 : app->camera.pitch < -89.0 ? -89.0 : app->camera.pitch;
 
 		glm::vec3 direction;
-		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-		direction.y = sin(glm::radians(pitch));
-		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-		app->camera.cameraFront = glm::normalize(direction);
-		*/
+		direction.x = cos(glm::radians(app->camera.yaw)) * cos(glm::radians(app->camera.pitch));
+		direction.y = sin(glm::radians(app->camera.pitch));
+		direction.z = sin(glm::radians(app->camera.yaw)) * cos(glm::radians(app->camera.pitch));
+		app->camera.front = glm::normalize(direction);
 	}
 }
 
@@ -477,11 +494,10 @@ void Render(App* app)
 
 void App::UpdateEntityBuffer()
 {
-	// temporal camera
+	// camera
 	camera.aspecRatio = (float)displaySize.x / (float)displaySize.y;
 	camera.fovYRad = glm::radians(60.0f);
 	glm::mat4 projection = glm::perspective(camera.fovYRad, camera.aspecRatio, camera.znear, camera.zfar);
-
 	glm::mat4 view = glm::lookAt(camera.pos, camera.pos + camera.front, camera.up);
 
 	BufferManager::MapBuffer(localUniformBuffer, GL_WRITE_ONLY);
@@ -490,6 +506,7 @@ void App::UpdateEntityBuffer()
 	PushVec3(localUniformBuffer, camera.pos);
 	PushUInt(localUniformBuffer, lights.size());
 
+	// Lights
 	for (int i = 0; i < lights.size(); ++i)
 	{
 		BufferManager::AlignHead(localUniformBuffer, sizeof(vec4));
