@@ -54,6 +54,7 @@ struct App
     GLuint renderToBackBufferShader;
     GLuint renderToFrameBufferShader;
     GLuint framebufferToQuadShader;
+    GLuint gridRenderShader;
 
     GLuint texturedMeshProgram_uTexture;
     

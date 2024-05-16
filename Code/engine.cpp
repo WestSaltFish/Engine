@@ -229,6 +229,7 @@ void Init(App* app)
 	app->renderToBackBufferShader = LoadProgram(app, "Shaders/RENDER_TO_BB.glsl", "RENDER_TO_BB");
 	app->renderToFrameBufferShader = LoadProgram(app, "Shaders/RENDER_TO_FB.glsl", "RENDER_TO_FB");
 	app->framebufferToQuadShader = LoadProgram(app, "Shaders/FB_TO_BB.glsl", "FB_TO_BB");
+	app->gridRenderShader = LoadProgram(app, "Shader/PRGrid.glsl", "GRID_SHADER");
 
 	const Program& texturedMeshProgram = app->programs[app->renderToBackBufferShader];
 	app->texturedMeshProgram_uTexture = glGetUniformLocation(texturedMeshProgram.handle, "uTexture");
@@ -248,7 +249,7 @@ void Init(App* app)
 	app->entities.push_back({ TransformPositionScale(vec3(-0.0, 0.0, -2.0), vec3(1.0, 1.0, 1.0)), ModelIndex, 0, 0 });
 	app->entities.push_back({ TransformPositionScale(vec3(-5.0, 0.0, -2.0), vec3(1.0, 1.0, 1.0)), ModelIndex, 0, 0 });
 
-	app->entities.push_back({ TransformPositionScale(vec3(0.0, 0.0, 0.0), vec3(10.0, 1.0, 10.0)), GroundModelIndex, 0, 0});
+	app->entities.push_back({ TransformPositionScale(vec3(0.0, 0.0, 0.0), vec3(10.0, 1.0, 10.0)), GroundModelIndex, 0, 0 });
 
 	app->lights.push_back({ LightType::LightType_Directional, vec3(1.0, 1.0, 1.0),vec3(1.0, -1.0, 1.0),vec3(0, 0, 0) });
 	app->lights.push_back({ LightType::LighthType_point, vec3(0.0, 1.0, 0.0),vec3(1.0, 1.0, 1.0),vec3(0, 0, 0) });
@@ -256,9 +257,9 @@ void Init(App* app)
 	app->ConfigureFrameBuffer(app->deferredFrameBuffer);
 
 	// Init camera
-	app->camera.cameraPos = glm::vec3(0.0f, 5.0f, 15.0f);
-	app->camera.cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-	app->camera.cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+	app->camera.pos = glm::vec3(0.0f, 5.0f, 15.0f);
+	app->camera.front = glm::vec3(0.0f, 0.0f, -1.0f);
+	app->camera.up = glm::vec3(0.0f, 1.0f, 0.0f);
 	app->camera.moveSpeed = 20.0f;
 
 	app->mode = Mode::Mode_Deferred;
@@ -310,19 +311,19 @@ void UpdateCamera(App* app)
 	// camera movement
 	if (app->input.keys[Key::K_W] == ButtonState::BUTTON_PRESSED)
 	{
-		app->camera.cameraPos += app->camera.cameraFront * moveSpeed;
+		app->camera.pos += app->camera.front * moveSpeed;
 	}
 	if (app->input.keys[Key::K_S] == ButtonState::BUTTON_PRESSED)
 	{
-		app->camera.cameraPos -= app->camera.cameraFront * moveSpeed;
+		app->camera.pos -= app->camera.front * moveSpeed;
 	}
 	if (app->input.keys[Key::K_A] == ButtonState::BUTTON_PRESSED)
 	{
-		app->camera.cameraPos -= glm::normalize(glm::cross(app->camera.cameraFront, app->camera.cameraUp)) * moveSpeed;
+		app->camera.pos -= glm::normalize(glm::cross(app->camera.front, app->camera.up)) * moveSpeed;
 	}
 	if (app->input.keys[Key::K_D] == ButtonState::BUTTON_PRESSED)
 	{
-		app->camera.cameraPos += glm::normalize(glm::cross(app->camera.cameraFront, app->camera.cameraUp)) * moveSpeed;
+		app->camera.pos += glm::normalize(glm::cross(app->camera.front, app->camera.up)) * moveSpeed;
 	}
 
 	// camera rotation
@@ -386,6 +387,7 @@ void Render(App* app)
 		glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 		glBindFramebuffer(GL_FRAMEBUFFER, app->deferredFrameBuffer.fbHandle);
 		glDrawBuffers(app->deferredFrameBuffer.colorAttachments.size(), app->deferredFrameBuffer.colorAttachments.data());
+
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -393,7 +395,44 @@ void Render(App* app)
 		glUseProgram(deferredProgram.handle);
 		app->RenderGeometry(deferredProgram);
 
+		// Render Grid To CA
+		/*
+		GLuint drawBuffers[] = { GL_COLOR_ATTACHMENT4 };
+		glDrawBuffers(1, drawBuffers);
+
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		GLuint gridHandle = app->programs[app->gridRenderShader].handle;
+
+		glUseProgram(gridHandle);
+
+		vec4 tbrl = app->camera.getTopBottomLeftRight();
+
+		glUniform1f(glGetUniformLocation(gridHandle, "top"), tbrl.x);
+		glUniform1f(glGetUniformLocation(gridHandle, "bottom"), tbrl.y);
+		glUniform1f(glGetUniformLocation(gridHandle, "right"), tbrl.z);
+		glUniform1f(glGetUniformLocation(gridHandle, "left"), tbrl.w);
+		glUniform1f(glGetUniformLocation(gridHandle, "znear"), app->camera.znear);
+
+		glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), app->camera.pos);
+		glm::mat4 yawMatrix = glm::rotate(glm::mat4(1.0), glm::radians(app->camera.yaw), glm::vec3(0.0, 1.0, 0.0));
+		glm::mat4 pitchMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(app->camera.pitch), glm::vec3(1.0, 0.0, 0.0));
+		glm::mat4 rotationMatrix = yawMatrix * pitchMatrix;
+		glm::mat4 cameraWorldMatrix = translationMatrix * rotationMatrix;
+
+		glUniformMatrix4fv(glGetUniformLocation(gridHandle, "worldMatrix"), 1, GL_FALSE, &cameraWorldMatrix[0][0]);
+
+		glBindVertexArray(app->vao);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+		*/
+
+		glBindVertexArray(0);
+		glUseProgram(0);
+
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glDisable(GL_BLEND);
 
 		// Render to BB from ColorAtt.
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -439,17 +478,16 @@ void Render(App* app)
 void App::UpdateEntityBuffer()
 {
 	// temporal camera
-	float aspecRatio = (float)displaySize.x / (float)displaySize.y;
-	float znear = 0.1f;
-	float zfar = 1000.0f;
-	glm::mat4 projection = glm::perspective(glm::radians(60.0f), aspecRatio, znear, zfar);
+	camera.aspecRatio = (float)displaySize.x / (float)displaySize.y;
+	camera.fovYRad = glm::radians(60.0f);
+	glm::mat4 projection = glm::perspective(camera.fovYRad, camera.aspecRatio, camera.znear, camera.zfar);
 
-	glm::mat4 view = glm::lookAt(camera.cameraPos, camera.cameraPos + camera.cameraFront, camera.cameraUp);
+	glm::mat4 view = glm::lookAt(camera.pos, camera.pos + camera.front, camera.up);
 
 	BufferManager::MapBuffer(localUniformBuffer, GL_WRITE_ONLY);
 
 	//globalParamsOffset - localUniformBuffer.head;
-	PushVec3(localUniformBuffer, camera.cameraPos);
+	PushVec3(localUniformBuffer, camera.pos);
 	PushUInt(localUniformBuffer, lights.size());
 
 	for (int i = 0; i < lights.size(); ++i)
@@ -549,7 +587,7 @@ void App::RenderGeometry(const Program& aBindedProgram)
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, textures[subMeshMaterial.albedoTextureIdx].handle);
 			glUniform1i(texturedMeshProgram_uTexture, 0);
-			
+
 			glUniform3fv(glGetUniformLocation(aBindedProgram.handle, "uAlbedo"), 1, glm::value_ptr(subMeshMaterial.albedo));
 			glUniform1i(glGetUniformLocation(aBindedProgram.handle, "useTexture"), subMeshMaterial.useTexture);
 

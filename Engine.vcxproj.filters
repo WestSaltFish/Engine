@@ -57,6 +57,7 @@
     <ClCompile Include="Code\BufferSupFuncs.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
+    <ClCompile Include="Code\Globals.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ThirdParty\imgui-docking\imconfig.h">
@@ -122,6 +123,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="WorkingDir\RENDER_TO_FB.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="WorkingDir\Shaders\PRGrid.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

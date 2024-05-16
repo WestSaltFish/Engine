@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="Code\BufferSupFuncs.cpp" />
     <ClCompile Include="Code\engine.cpp" />
+    <ClCompile Include="Code\Globals.cpp" />
     <ClCompile Include="Code\ModelLoadingFuncs.cpp" />
     <ClCompile Include="Code\platform.cpp" />
     <ClCompile Include="ThirdParty\glad\include\glad\glad.c" />
@@ -57,6 +58,7 @@
     <None Include="WorkingDir\RENDER_TO_BB.glsl" />
     <None Include="WorkingDir\RENDER_TO_FB.glsl" />
     <None Include="WorkingDir\shaders.glsl" />
+    <None Include="WorkingDir\Shaders\PRGrid.glsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

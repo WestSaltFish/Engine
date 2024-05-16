@@ -206,11 +206,34 @@ struct FrameBuffer
 
 struct Camera
 {
-    glm::vec3 cameraPos;
-    glm::vec3 cameraFront;
-    glm::vec3 cameraUp;
+    glm::vec3 pos;
+    glm::vec3 front;
+    glm::vec3 up;
     glm::vec3 cameraTarget;
+
+    float yaw;
+    float pitch;
+
     float moveSpeed;
+    float aspecRatio = 0.0;
+    float znear = 0.1f;
+    float zfar = 1000.0f;
+    float fovYRad;
+
+    glm::vec4 getTopBottomLeftRight()
+    {
+        glm::vec4 ret;
+        // Top
+        ret.x = tan(fovYRad / 2) * znear;     
+        // Bottom
+        ret.y = -ret.x;
+        // Right
+        ret.z = ret.x * aspecRatio;
+        // Left
+        ret.w = -ret.z;
+
+        return ret;
+    }
 };
 
 #define ILOG(...)                 \
