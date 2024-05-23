@@ -21,6 +21,17 @@ const u16 indices[] =
     0,2,3
 };
 
+struct Bloom 
+{
+    GLuint rtBright; // For blitting brightest pixels and vertical blur
+    GLuint rtBloomH; // For first pass horizontal blur
+    FrameBuffer fbBloom1;
+    FrameBuffer fbBloom2;
+    FrameBuffer fbBloom3;
+    FrameBuffer fbBloom4;
+    FrameBuffer fbBloom5;
+};
+
 struct App
 {
     void UpdateEntityBuffer();
@@ -55,6 +66,10 @@ struct App
     GLuint renderToFrameBufferShader;
     GLuint framebufferToQuadShader;
     GLuint gridRenderShader;
+    // for bloom
+    GLuint blitBrightestPixelsShader;
+    GLuint blurShader;
+    GLuint bloomShader;
 
     GLuint texturedMeshProgram_uTexture;
     
@@ -92,6 +107,8 @@ struct App
 
     FrameBuffer deferredFrameBuffer;
 
+    Bloom bloom;
+
     Camera camera;
 };
 
@@ -104,3 +121,5 @@ void Update(App* app);
 void Render(App* app);
 
 void UpdateCamera(App* app);
+
+void InitBloomEffect(App* app);

@@ -11,6 +11,9 @@
 #include <stb_image_write.h>
 #include "Globals.h"
 
+#define MIPMAP_BASE_LEVEL 0
+#define MIPMAP_MAX_LEVEL 4
+
 GLuint CreateProgramFromSource(String programSource, const char* shaderName)
 {
 	GLchar  infoLogBuffer[1024] = {};
@@ -231,6 +234,13 @@ void Init(App* app)
 	app->framebufferToQuadShader = LoadProgram(app, "Shaders/FB_TO_BB.glsl", "FB_TO_BB");
 	app->gridRenderShader = LoadProgram(app, "Shader/PRGrid.glsl", "GRID_SHADER");
 
+	// Load bloom shaders
+	/*
+	app->blitBrightestPixelsShader = LoadProgram(app, "Shader/PRGrid.glsl", "GRID_SHADER");
+	app->blurShader = LoadProgram(app, "Shader/PRGrid.glsl", "GRID_SHADER");
+	app->bloomShader = LoadProgram(app, "Shader/PRGrid.glsl", "GRID_SHADER");
+	*/
+
 	const Program& texturedMeshProgram = app->programs[app->renderToBackBufferShader];
 	app->texturedMeshProgram_uTexture = glGetUniformLocation(texturedMeshProgram.handle, "uTexture");
 
@@ -255,6 +265,13 @@ void Init(App* app)
 	app->lights.push_back({ LightType::LighthType_point, vec3(0.0, 1.0, 0.0),vec3(1.0, 1.0, 1.0),vec3(0, 0, 0) });
 
 	app->ConfigureFrameBuffer(app->deferredFrameBuffer);
+
+	// config frame buffer
+	app->ConfigureFrameBuffer(app->bloom.fbBloom1);
+	app->ConfigureFrameBuffer(app->bloom.fbBloom2);
+	app->ConfigureFrameBuffer(app->bloom.fbBloom3);
+	app->ConfigureFrameBuffer(app->bloom.fbBloom4);
+	app->ConfigureFrameBuffer(app->bloom.fbBloom5);
 
 	// Init camera
 	app->camera.pos = glm::vec3(0.0f, 5.0f, 15.0f);
@@ -371,6 +388,47 @@ void UpdateCamera(App* app)
 		direction.z = sin(glm::radians(app->camera.yaw)) * cos(glm::radians(app->camera.pitch));
 		app->camera.front = glm::normalize(direction);
 	}
+}
+
+void InitBloomEffect(App* app)
+{
+	// Vertical
+	if (app->bloom.rtBright != 0)
+		glDeleteTextures(1, &app->bloom.rtBright);
+	
+	glGenTextures(1, &app->bloom.rtBright);
+	glBindTexture(GL_TEXTURE_2D, app->bloom.rtBright);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, MIPMAP_BASE_LEVEL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MIPMAP_MAX_LEVEL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, app->displaySize.x / 2, app->displaySize.y / 2, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 1, GL_RGBA16F, app->displaySize.x / 4, app->displaySize.y / 4, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 2, GL_RGBA16F, app->displaySize.x / 8, app->displaySize.y / 8, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 3, GL_RGBA16F, app->displaySize.x / 16, app->displaySize.y / 16, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 4, GL_RGBA16F, app->displaySize.x / 32, app->displaySize.y / 32, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	// Horizontal
+	if (app->bloom.rtBloomH != 0)
+		glDeleteTextures(1, &app->bloom.rtBloomH);
+
+	glGenTextures(1, &app->bloom.rtBloomH);
+	glBindTexture(GL_TEXTURE_2D, app->bloom.rtBloomH);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, MIPMAP_BASE_LEVEL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MIPMAP_MAX_LEVEL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, app->displaySize.x / 2, app->displaySize.y / 2, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 1, GL_RGBA16F, app->displaySize.x / 4, app->displaySize.y / 4, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 2, GL_RGBA16F, app->displaySize.x / 8, app->displaySize.y / 8, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 3, GL_RGBA16F, app->displaySize.x / 16, app->displaySize.y / 16, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 4, GL_RGBA16F, app->displaySize.x / 32, app->displaySize.y / 32, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 void Render(App* app)
