@@ -563,9 +563,9 @@ void Render(App* app)
 		glBindVertexArray(app->vao);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 
+		// Release source
 		glBindVertexArray(0);
 		glUseProgram(0);
-
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 	break;
