@@ -123,3 +123,5 @@ void Render(App* app);
 void UpdateCamera(App* app);
 
 void InitBloomEffect(App* app);
+
+void PassBlitBrightPixels(App* app);

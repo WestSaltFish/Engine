@@ -235,11 +235,9 @@ void Init(App* app)
 	app->gridRenderShader = LoadProgram(app, "Shader/PRGrid.glsl", "GRID_SHADER");
 
 	// Load bloom shaders
-	/*
-	app->blitBrightestPixelsShader = LoadProgram(app, "Shader/PRGrid.glsl", "GRID_SHADER");
-	app->blurShader = LoadProgram(app, "Shader/PRGrid.glsl", "GRID_SHADER");
-	app->bloomShader = LoadProgram(app, "Shader/PRGrid.glsl", "GRID_SHADER");
-	*/
+	app->blitBrightestPixelsShader = LoadProgram(app, "Shader/PASS_BLIT_BRIGHT.glsl", "PASS_BLIT_BRIGHT");
+	app->blurShader = LoadProgram(app, "Shader/BLUR.glsl", "BLUR");
+	app->bloomShader = LoadProgram(app, "Shader/BLOOM.glsl", "BLOOM");
 
 	const Program& texturedMeshProgram = app->programs[app->renderToBackBufferShader];
 	app->texturedMeshProgram_uTexture = glGetUniformLocation(texturedMeshProgram.handle, "uTexture");
@@ -431,6 +429,30 @@ void InitBloomEffect(App* app)
 	glGenerateMipmap(GL_TEXTURE_2D);
 }
 
+void PassBlitBrightPixels(App* app)
+{
+	float threshold = 1.0;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, app->bloom.fbBloom1.fbHandle);
+	glDrawBuffer(GL_COLOR_ATTACHMENT0);
+	glViewport(0, 0, app->displaySize.x, app->displaySize.y);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	const Program& blitBrightestProgram = app->programs[app->blitBrightestPixelsShader];
+	glUseProgram(blitBrightestProgram.handle);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, app->bloom.fbBloom1.colorAttachments[0]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glUniform1f(glGetUniformLocation(blitBrightestProgram.handle, "threshold"), threshold);
+	glUniform1i(glGetUniformLocation(blitBrightestProgram.handle, "colorTexture"), 0);
+
+	app->RenderGeometry(blitBrightestProgram);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glUseProgram(0);
+}
+
 void Render(App* app)
 {
 	switch (app->mode)
@@ -439,14 +461,16 @@ void Render(App* app)
 	{
 		app->UpdateEntityBuffer();
 
+		glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
 		const Program& forwardProgram = app->programs[app->renderToBackBufferShader];
 		glUseProgram(forwardProgram.handle);
 		app->RenderGeometry(forwardProgram);
+
+		// try to do bloom here
 	}
 	break;
 
@@ -455,11 +479,11 @@ void Render(App* app)
 		app->UpdateEntityBuffer();
 
 		// Render to FB ColorAtt.
+		glViewport(0, 0, app->displaySize.x, app->displaySize.y);
+		glBindFramebuffer(GL_FRAMEBUFFER, app->deferredFrameBuffer.fbHandle);
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, app->deferredFrameBuffer.fbHandle);
 		glDrawBuffers(app->deferredFrameBuffer.colorAttachments.size(), app->deferredFrameBuffer.colorAttachments.data());
 
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -548,7 +572,6 @@ void Render(App* app)
 
 	case Mode_Bloom:
 	{
-#define LOD(x) x
 		const vec2 horizontal(1.0, 0.0);
 		const vec2 vertical(0.0, 1.0);
 
@@ -556,15 +579,7 @@ void Render(App* app)
 		const float h = app->displaySize.y;
 
 		float threshold = 1.0;	
-		glBindFramebuffer(GL_FRAMEBUFFER, app->deferredFrameBuffer.fbHandle);
-		glDrawBuffer(GL_COLOR_ATTACHMENT0);
-		glViewport(0, 0, app->displaySize.x, app->displaySize.y);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		const Program& forwardProgram = app->programs[app->blitBrightestPixelsShader];
-		glUseProgram(forwardProgram.handle);
-
-#undef LOD
 	}
 	break;
 
@@ -616,50 +631,6 @@ void App::UpdateEntityBuffer()
 	}
 
 	BufferManager::UnmapBuffer(localUniformBuffer);
-}
-
-void App::ConfigureFrameBuffer(FrameBuffer& aConfig)
-{
-	aConfig.colorAttachments.push_back(CreateTexture());
-	aConfig.colorAttachments.push_back(CreateTexture(true));
-	aConfig.colorAttachments.push_back(CreateTexture(true));
-	aConfig.colorAttachments.push_back(CreateTexture(true));
-
-	glGenTextures(1, &aConfig.depthHandle);
-	glBindTexture(GL_TEXTURE_2D, aConfig.depthHandle);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, displaySize.x, displaySize.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	glGenFramebuffers(1, &aConfig.fbHandle);
-	glBindFramebuffer(GL_FRAMEBUFFER, aConfig.fbHandle);
-
-	std::vector<GLuint> drawBuffers;
-
-	for (int i = 0; i < aConfig.colorAttachments.size(); ++i)
-	{
-		GLuint position = GL_COLOR_ATTACHMENT0 + i;
-		glFramebufferTexture(GL_FRAMEBUFFER, position, aConfig.colorAttachments[i], 0);
-		drawBuffers.push_back(position);
-	}
-
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, aConfig.depthHandle, 0);
-
-	glDrawBuffers(drawBuffers.size(), drawBuffers.data());
-
-	GLuint framebufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-
-	if (framebufferStatus != GL_FRAMEBUFFER_COMPLETE)
-	{
-		int i = 0;
-	}
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void App::RenderGeometry(const Program& aBindedProgram)
