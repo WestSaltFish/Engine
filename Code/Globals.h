@@ -140,6 +140,7 @@ enum Mode
 {
     Mode_Forward,
     Mode_Deferred,
+    Mode_Bloom,
     Mode_Count
 };
 

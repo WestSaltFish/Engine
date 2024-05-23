@@ -440,10 +440,8 @@ void Render(App* app)
 		app->UpdateEntityBuffer();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
 		const Program& forwardProgram = app->programs[app->renderToBackBufferShader];
@@ -460,6 +458,7 @@ void Render(App* app)
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, app->displaySize.x, app->displaySize.y);
+
 		glBindFramebuffer(GL_FRAMEBUFFER, app->deferredFrameBuffer.fbHandle);
 		glDrawBuffers(app->deferredFrameBuffer.colorAttachments.size(), app->deferredFrameBuffer.colorAttachments.data());
 
@@ -546,6 +545,29 @@ void Render(App* app)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 	break;
+
+	case Mode_Bloom:
+	{
+#define LOD(x) x
+		const vec2 horizontal(1.0, 0.0);
+		const vec2 vertical(0.0, 1.0);
+
+		const float w = app->displaySize.x;
+		const float h = app->displaySize.y;
+
+		float threshold = 1.0;	
+		glBindFramebuffer(GL_FRAMEBUFFER, app->deferredFrameBuffer.fbHandle);
+		glDrawBuffer(GL_COLOR_ATTACHMENT0);
+		glViewport(0, 0, app->displaySize.x, app->displaySize.y);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		const Program& forwardProgram = app->programs[app->blitBrightestPixelsShader];
+		glUseProgram(forwardProgram.handle);
+
+#undef LOD
+	}
+	break;
+
 	default:;
 	}
 }
