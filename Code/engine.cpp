@@ -484,10 +484,10 @@ void Render(App* app)
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glDrawBuffers(app->deferredFrameBuffer.colorAttachments.size(), app->deferredFrameBuffer.colorAttachments.data());
+		//glDrawBuffers(app->deferredFrameBuffer.colorAttachments.size(), app->deferredFrameBuffer.colorAttachments.data());
 
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		const Program& deferredProgram = app->programs[app->renderToFrameBufferShader];
 		glUseProgram(deferredProgram.handle);
@@ -631,6 +631,50 @@ void App::UpdateEntityBuffer()
 	}
 
 	BufferManager::UnmapBuffer(localUniformBuffer);
+}
+
+void App::ConfigureFrameBuffer(FrameBuffer& aConfigFB)
+{
+	aConfigFB.colorAttachments.push_back(CreateTexture());
+	aConfigFB.colorAttachments.push_back(CreateTexture(true));
+	aConfigFB.colorAttachments.push_back(CreateTexture(true));
+	aConfigFB.colorAttachments.push_back(CreateTexture(true));
+
+	aConfigFB.colorAttachments.push_back(CreateTexture(true)); // oMetallic
+	aConfigFB.colorAttachments.push_back(CreateTexture(true)); // oRoughness
+	aConfigFB.colorAttachments.push_back(CreateTexture(true)); // oAo
+	aConfigFB.colorAttachments.push_back(CreateTexture(true)); // oEmissive
+
+	glGenTextures(1, &aConfigFB.depthHandle);
+	glBindTexture(GL_TEXTURE_2D, aConfigFB.depthHandle);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, displaySize.x, displaySize.y, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glGenFramebuffers(1, &aConfigFB.fbHandle);
+	glBindFramebuffer(GL_FRAMEBUFFER, aConfigFB.fbHandle);
+
+	std::vector<GLuint> drawBuffers;
+	for (size_t i = 0; i < aConfigFB.colorAttachments.size(); ++i)
+	{
+		GLuint position = GL_COLOR_ATTACHMENT0 + i;
+		glFramebufferTexture(GL_FRAMEBUFFER, position, aConfigFB.colorAttachments[i], 0);
+		drawBuffers.push_back(position);
+	}
+
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, aConfigFB.depthHandle, 0);
+	glDrawBuffers(drawBuffers.size(), drawBuffers.data());
+
+	GLenum framebufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (framebufferStatus != GL_FRAMEBUFFER_COMPLETE)
+	{
+		int i = 0;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void App::RenderGeometry(const Program& aBindedProgram)
